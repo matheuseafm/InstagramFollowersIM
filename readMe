@@ -1,0 +1,17 @@
+"""
+Este script automatiza o processo de seguir usuários no Instagram.
+
+Funções:
+- login: Realiza o login na conta do Instagram usando as credenciais fornecidas.
+- find_users: Encontra usuários para seguir com base em critérios específicos.
+- follow_user: Segue um usuário específico.
+- main: Função principal que coordena o processo de login, busca de usuários e segue os usuários encontrados.
+
+Parâmetros:
+- username (str): Nome de usuário da conta do Instagram.
+- password (str): Senha da conta do Instagram.
+- search_criteria (str): Critérios de busca para encontrar usuários a seguir.
+
+Exemplo de uso:
+1. Defina as credenciais de login e os critérios de busca.
+2. Execute a função principal para iniciar o processo de seguir usuários.

@@ -25,7 +25,7 @@ if __name__ == "__main__":
             try:
                 cl.user_follow(user_id)
                 print(f"Seguiu: {user_id}")
-                time.sleep(30)  # Pequeno intervalo para evitar detecção
+                time.sleep(50)  # Pequeno intervalo para evitar detecção
             except Exception as e:
                 print(f"Erro ao seguir {user_id}: {e}")
         print("Aguardando 15 minutos...")

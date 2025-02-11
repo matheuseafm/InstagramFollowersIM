@@ -1,17 +1,20 @@
 """
-Este script automatiza o processo de seguir usuários no Instagram.
+Este script automatiza o processo de seguir usuários no Instagram usando a biblioteca instagrapi.
+
+Constantes:
+- USERNAME: Nome de usuário da conta do Instagram.
+- PASSWORD: Senha da conta do Instagram.
+- TWO_FA_CODE: Código de autenticação de dois fatores.
+- TARGET_USER: Nome de usuário do alvo cujos seguidores serão seguidos.
 
 Funções:
-- login: Realiza o login na conta do Instagram usando as credenciais fornecidas.
-- find_users: Encontra usuários para seguir com base em critérios específicos.
-- follow_user: Segue um usuário específico.
-- main: Função principal que coordena o processo de login, busca de usuários e segue os usuários encontrados.
+- login(): Realiza o login na conta do Instagram. Tenta carregar uma sessão salva de 'session.json' e, se falhar, realiza o login e salva a sessão.
+- get_followers(cl, username, amount=100): Obtém uma lista de IDs dos seguidores de um usuário específico.
 
-Parâmetros:
-- username (str): Nome de usuário da conta do Instagram.
-- password (str): Senha da conta do Instagram.
-- search_criteria (str): Critérios de busca para encontrar usuários a seguir.
-
-Exemplo de uso:
-1. Defina as credenciais de login e os critérios de busca.
-2. Execute a função principal para iniciar o processo de seguir usuários.
+Execução principal:
+- Realiza o login na conta do Instagram.
+- Obtém os seguidores do usuário alvo.
+- Segue os seguidores em lotes de 20, com um intervalo de 50 segundos entre cada ação de seguir.
+- Após seguir cada lote, aguarda 15 minutos antes de seguir mais pessoas.
+- Exibe mensagens de status e erros durante o processo.
+"""

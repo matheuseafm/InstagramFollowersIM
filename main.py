@@ -3,8 +3,8 @@ import os
 import random
 from instagrapi import Client
 
-USERNAME = ""
-PASSWORD = ""
+USERNAME = "matheusimteste"
+PASSWORD = "matheusteste123"
 TARGET_USER = "instagram"
 
 def login():

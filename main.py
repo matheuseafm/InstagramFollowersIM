@@ -1,44 +1,31 @@
 import time
 import os
 import random
-import pyotp  # Para geração automática do código 2FA
 from instagrapi import Client
 
-# Configurações de acesso e 2FA
-USERNAME = "matheusteste03"
-PASSWORD = "testeinsta123"
+USERNAME = ""
+PASSWORD = ""
 TARGET_USER = "instagram"
-# Substitua pelo seu secret 2FA (em base32) se usar o método TOTP:
-TWO_FA_SECRET = "YOUR_2FA_SECRET"  
-
-def get_totp_code(secret):
-    totp = pyotp.TOTP(secret)
-    return totp.now()
 
 def login():
-    # Se necessário, você pode configurar um proxy (exemplo):
-    # cl = Client(proxy="http://IP:PORTA")
     cl = Client()
     
-    # Tenta carregar a sessão salva para evitar múltiplos logins
     if os.path.exists("session.json"):
         try:
             cl.load_settings("session.json")
         except Exception as e:
             print("Erro ao carregar a sessão:", e)
-    
-    # Gera o código 2FA atual automaticamente
-    current_code = get_totp_code(TWO_FA_SECRET)
-    print("Código 2FA gerado:", current_code)
-    
     try:
-        cl.login(USERNAME, PASSWORD, verification_code=current_code)
+        cl.login(USERNAME, PASSWORD, verification_code="<2FA CODE HERE>")
     except Exception as e:
         print("Erro durante o login:", e)
-        # Caso o código esteja expirado ou inválido, solicita o código manualmente:
-        new_code = input("Digite o código 2FA atualizado: ").strip()
-        cl.login(USERNAME, PASSWORD, verification_code=new_code)
-    
+        new_code = input("Digite o código 2FA atual: ").strip()
+        try:
+            cl.login(USERNAME, PASSWORD, verification_code=new_code)
+        except Exception as e2:
+            print("Novo erro durante o login:", e2)
+            raise e2
+
     cl.dump_settings("session.json")
     return cl
 
@@ -47,38 +34,78 @@ def get_followers(cl, username, amount=100):
     followers = cl.user_followers(user_id, amount=amount)
     return list(followers.keys())
 
-def simulate_human_behavior():
+def simulate_profile_visit(cl, user_id):
     """
-    Função para simular ações de um usuário real, adicionando pequenos atrasos aleatórios.
+    Simula a visita ao perfil do usuário, buscando algumas informações
+    e aguardando um tempo aleatório para simular a leitura do perfil.
     """
+    print(f"Acessando o perfil do usuário {user_id}...")
+    try:
+        user_info = cl.user_info(user_id)
+        print(f"Nome: {user_info.username}, Seguidores: {user_info.follower_count}")
+    except Exception as e:
+        print(f"Erro ao acessar perfil do usuário {user_id}: {e}")
+    delay = random.uniform(3, 10)
+    print(f"Simulando leitura do perfil por {delay:.2f} segundos...")
+    time.sleep(delay)
+
+def simulate_feed_scrolling():
+    """
+    Simula a ação de rolar o feed, com um pequeno atraso.
+    """
+    delay = random.uniform(2, 5)
+    print(f"Simulando rolagem do feed por {delay:.2f} segundos...")
+    time.sleep(delay)
+
+def simulate_typing():
+    """
+    Simula a digitação (por exemplo, de um comentário), apenas com atraso.
+    """
+    delay = random.uniform(1, 3)
+    print(f"Simulando digitação por {delay:.2f} segundos...")
+    time.sleep(delay)
+
+def simulate_complete_human_behavior(cl, user_id):
+    """
+    Executa uma série de simulações para imitar o comportamento humano:
+      - Visita ao perfil do usuário
+      - Rolagem do feed
+      - Possível digitação (simulação)
+      - Pausa adicional para imitar uma ação realista
+    """
+    simulate_profile_visit(cl, user_id)
+    simulate_feed_scrolling()
+    # Com 50% de chance, simula digitação
+    if random.choice([True, False]):
+        simulate_typing()
     additional_delay = random.uniform(5, 15)
-    print(f"Simulando comportamento humano... aguardando {additional_delay:.2f} segundos")
+    print(f"Pausa adicional para simulação completa: {additional_delay:.2f} segundos")
     time.sleep(additional_delay)
 
 if __name__ == "__main__":
     cl = login()
     followers = get_followers(cl, TARGET_USER, amount=100)
     
-    batch_size = 20  # Número de ações em cada lote
+    batch_size = 20  # Processa os seguidores em lotes de 20
     for i in range(0, len(followers), batch_size):
         batch = followers[i:i+batch_size]
         for user_id in batch:
             try:
+                # Simula um comportamento completo antes de seguir o usuário
+                simulate_complete_human_behavior(cl, user_id)
                 cl.user_follow(user_id)
                 print(f"Seguiu: {user_id}")
-                simulate_human_behavior()
-                # Intervalo aleatório entre 45 e 90 segundos para a próxima ação
-                delay = random.uniform(45, 90)
-                print(f"Aguardando {delay:.2f} segundos antes da próxima ação.")
-                time.sleep(delay)
+                # Pausa após seguir para imitar um comportamento natural
+                post_follow_delay = random.uniform(10, 30)
+                print(f"Pausa pós-seguimento de {post_follow_delay:.2f} segundos")
+                time.sleep(post_follow_delay)
             except Exception as e:
                 print(f"Erro ao seguir {user_id}: {e}")
-                # Em caso de erro, aguarda um intervalo maior para evitar bloqueios
-                delay_error = random.uniform(60, 120)
-                print(f"Aguardando {delay_error:.2f} segundos devido ao erro.")
-                time.sleep(delay_error)
-        # Intervalo aleatório entre os lotes, entre 10 e 20 minutos
+                error_delay = random.uniform(60, 120)
+                print(f"Pausa de {error_delay:.2f} segundos devido ao erro")
+                time.sleep(error_delay)
+        # Pausa maior entre os lotes de seguidores
         batch_delay = random.uniform(600, 1200)
-        print(f"Aguardando {batch_delay/60:.2f} minutos antes de iniciar o próximo lote.")
+        print(f"Aguardando {batch_delay/60:.2f} minutos antes do próximo lote")
         time.sleep(batch_delay)
-    print("Fim do script.")
+    print("Fim do script")

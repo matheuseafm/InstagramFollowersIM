@@ -15,6 +15,7 @@ def login():
             cl.load_settings("session.json")
         except Exception as e:
             print("Erro ao carregar a sessão:", e)
+    
     try:
         cl.login(USERNAME, PASSWORD, verification_code="<2FA CODE HERE>")
     except Exception as e:
@@ -34,53 +35,64 @@ def get_followers(cl, username, amount=100):
     followers = cl.user_followers(user_id, amount=amount)
     return list(followers.keys())
 
-def simulate_profile_visit(cl, user_id):
-    """
-    Simula a visita ao perfil do usuário, buscando algumas informações
-    e aguardando um tempo aleatório para simular a leitura do perfil.
-    """
+def simulate_profile_visit(cl, user_id, delay_range=(10, 20)):
     print(f"Acessando o perfil do usuário {user_id}...")
     try:
         user_info = cl.user_info(user_id)
-        print(f"Nome: {user_info.username}, Seguidores: {user_info.follower_count}")
+        print(f"Perfil: {user_info.username} | Seguidores: {user_info.follower_count}")
     except Exception as e:
         print(f"Erro ao acessar perfil do usuário {user_id}: {e}")
-    delay = random.uniform(3, 10)
-    print(f"Simulando leitura do perfil por {delay:.2f} segundos...")
-    time.sleep(delay)
+    duration = random.uniform(*delay_range)
+    print(f"Simulando visita ao perfil por {duration:.2f} segundos...")
+    time.sleep(duration)
+    return duration
 
-def simulate_feed_scrolling():
-    """
-    Simula a ação de rolar o feed, com um pequeno atraso.
-    """
-    delay = random.uniform(2, 5)
-    print(f"Simulando rolagem do feed por {delay:.2f} segundos...")
-    time.sleep(delay)
+def simulate_feed_scrolling(delay_range=(10, 20)):
+    duration = random.uniform(*delay_range)
+    print(f"Simulando rolagem do feed por {duration:.2f} segundos...")
+    time.sleep(duration)
+    return duration
 
-def simulate_typing():
-    """
-    Simula a digitação (por exemplo, de um comentário), apenas com atraso.
-    """
-    delay = random.uniform(1, 3)
-    print(f"Simulando digitação por {delay:.2f} segundos...")
-    time.sleep(delay)
+def simulate_typing(delay_range=(5, 10)):
+    duration = random.uniform(*delay_range)
+    print(f"Simulando digitação por {duration:.2f} segundos...")
+    time.sleep(duration)
+    return duration
 
-def simulate_complete_human_behavior(cl, user_id):
+def simulate_random_behavior(cl, user_id, total_target=60):
     """
-    Executa uma série de simulações para imitar o comportamento humano:
-      - Visita ao perfil do usuário
+    Simula um comportamento aleatório para um usuário.
+    O script escolhe aleatoriamente entre as ações:
+      - Visitar o perfil
       - Rolagem do feed
-      - Possível digitação (simulação)
-      - Pausa adicional para imitar uma ação realista
+      - Digitação
+    Nem todas as ações precisam ocorrer a cada execução.
+    Ao final, se o tempo total gasto for inferior a 'total_target' segundos,
+    aguarda o tempo restante.
     """
-    simulate_profile_visit(cl, user_id)
-    simulate_feed_scrolling()
-    # Com 50% de chance, simula digitação
-    if random.choice([True, False]):
-        simulate_typing()
-    additional_delay = random.uniform(5, 15)
-    print(f"Pausa adicional para simulação completa: {additional_delay:.2f} segundos")
-    time.sleep(additional_delay)
+    actions = [
+        ("visita", lambda: simulate_profile_visit(cl, user_id)),
+        ("rolagem", simulate_feed_scrolling),
+        ("digitação", simulate_typing)
+    ]
+    
+    num_actions = random.randint(1, len(actions))
+    selected_actions = random.sample(actions, num_actions)
+    
+    total_time = 0
+    print(f"\nIniciando simulação de comportamento (alvo: {total_target} segundos). Ações selecionadas: {[name for name, _ in selected_actions]}")
+    for name, action in selected_actions:
+        t = action()
+        total_time += t
+    
+    if total_time < total_target:
+        extra = total_target - total_time
+        print(f"Pausa adicional de {extra:.2f} segundos para completar {total_target} segundos de simulação.")
+        time.sleep(extra)
+        total_time += extra
+        
+    print(f"Simulação completa: {total_time:.2f} segundos.\n")
+    return total_time
 
 if __name__ == "__main__":
     cl = login()
@@ -91,21 +103,20 @@ if __name__ == "__main__":
         batch = followers[i:i+batch_size]
         for user_id in batch:
             try:
-                # Simula um comportamento completo antes de seguir o usuário
-                simulate_complete_human_behavior(cl, user_id)
+                # Executa a simulação de comportamento aleatório (aproximadamente 1 minuto)
+                simulate_random_behavior(cl, user_id, total_target=60)
                 cl.user_follow(user_id)
                 print(f"Seguiu: {user_id}")
-                # Pausa após seguir para imitar um comportamento natural
-                post_follow_delay = random.uniform(10, 30)
-                print(f"Pausa pós-seguimento de {post_follow_delay:.2f} segundos")
+                # Aguarda entre 1 a 2 minutos (60 a 120 segundos) após seguir
+                post_follow_delay = random.uniform(60, 120)
+                print(f"Pausa pós-seguimento de {post_follow_delay:.2f} segundos\n")
                 time.sleep(post_follow_delay)
             except Exception as e:
-                print(f"Erro ao seguir {user_id}: {e}")
-                error_delay = random.uniform(60, 120)
-                print(f"Pausa de {error_delay:.2f} segundos devido ao erro")
+                print(f"\nErro ao seguir {user_id}: {e}")
+                error_delay = random.uniform(120, 180)
+                print(f"Pausa de {error_delay:.2f} segundos devido ao erro\n")
                 time.sleep(error_delay)
-        # Pausa maior entre os lotes de seguidores
-        batch_delay = random.uniform(600, 1200)
-        print(f"Aguardando {batch_delay/60:.2f} minutos antes do próximo lote")
+        batch_delay = random.uniform(1200, 2400)
+        print(f"\nAguardando {batch_delay/60:.2f} minutos antes do próximo lote\n")
         time.sleep(batch_delay)
     print("Fim do script")

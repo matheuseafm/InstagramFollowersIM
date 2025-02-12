@@ -3,12 +3,12 @@ import os
 import random
 from instagrapi import Client
 
-USERNAME = "matheusimteste"
-PASSWORD = "matheusteste123"
-TARGET_USER = "instagram"
+USERNAME = ""        
+PASSWORD = ""        
+TARGET_USER = "instagram"         
 
 def login():
-    cl = Client()
+    cl = Client() 
     
     if os.path.exists("session.json"):
         try:
@@ -43,80 +43,99 @@ def simulate_profile_visit(cl, user_id, delay_range=(10, 20)):
     except Exception as e:
         print(f"Erro ao acessar perfil do usuário {user_id}: {e}")
     duration = random.uniform(*delay_range)
-    print(f"Simulando visita ao perfil por {duration:.2f} segundos...")
+    print(f"Simulando visita ao perfil por {duration:.2f} seg...")
     time.sleep(duration)
     return duration
 
 def simulate_feed_scrolling(delay_range=(10, 20)):
     duration = random.uniform(*delay_range)
-    print(f"Simulando rolagem do feed por {duration:.2f} segundos...")
+    print(f"Simulando rolagem do feed por {duration:.2f} seg...")
     time.sleep(duration)
     return duration
 
 def simulate_typing(delay_range=(5, 10)):
     duration = random.uniform(*delay_range)
-    print(f"Simulando digitação por {duration:.2f} segundos...")
+    print(f"Simulando digitação por {duration:.2f} seg...")
     time.sleep(duration)
     return duration
 
-def simulate_random_behavior(cl, user_id, total_target=60):
+def simulate_view_stories(delay_range=(10, 30)):
+    duration = random.uniform(*delay_range)
+    print(f"Simulando visualização de stories por {duration:.2f} seg...")
+    time.sleep(duration)
+    return duration
+
+def simulate_like_post(cl, user_id):
+    try:
+        medias = cl.user_medias(user_id, amount=3)
+        if medias:
+            media = random.choice(medias)
+            cl.media_like(media.id)
+            duration = random.uniform(5, 10)
+            print(f"Curti a publicação {media.id} do usuário {user_id}. Esperando {duration:.2f} seg.")
+            time.sleep(duration)
+            return duration
+        else:
+            return 0
+    except Exception as e:
+        print(f"Erro ao curtir publicação do usuário {user_id}: {e}")
+        return 0
+
+def simulate_random_behavior(cl, user_id, total_target):
     """
-    Simula um comportamento aleatório para um usuário.
-    O script escolhe aleatoriamente entre as ações:
+    Seleciona aleatoriamente de 1 a 3 ações entre:
       - Visitar o perfil
       - Rolagem do feed
       - Digitação
-    Nem todas as ações precisam ocorrer a cada execução.
-    Ao final, se o tempo total gasto for inferior a 'total_target' segundos,
+      - Visualização de stories
+      - Curtir uma publicação
+    Executa as ações e, se o tempo total for menor que 'total_target' segundos,
     aguarda o tempo restante.
     """
     actions = [
         ("visita", lambda: simulate_profile_visit(cl, user_id)),
         ("rolagem", simulate_feed_scrolling),
-        ("digitação", simulate_typing)
+        ("digitação", simulate_typing),
+        ("stories", simulate_view_stories),
+        ("curtir", lambda: simulate_like_post(cl, user_id))
     ]
     
-    num_actions = random.randint(1, len(actions))
+    num_actions = random.randint(1, 3)
     selected_actions = random.sample(actions, num_actions)
     
     total_time = 0
-    print(f"\nIniciando simulação de comportamento (alvo: {total_target} segundos). Ações selecionadas: {[name for name, _ in selected_actions]}")
+    print(f"\nIniciando simulação (alvo: {total_target:.2f} seg) para o usuário {user_id}. Ações: {[name for name, _ in selected_actions]}")
     for name, action in selected_actions:
         t = action()
         total_time += t
     
     if total_time < total_target:
         extra = total_target - total_time
-        print(f"Pausa adicional de {extra:.2f} segundos para completar {total_target} segundos de simulação.")
+        print(f"Pausa adicional de {extra:.2f} seg para completar {total_target:.2f} seg.")
         time.sleep(extra)
         total_time += extra
         
-    print(f"Simulação completa: {total_time:.2f} segundos.\n")
+    print(f"Simulação completa para o usuário {user_id}: {total_time:.2f} seg.\n")
     return total_time
 
 if __name__ == "__main__":
     cl = login()
     followers = get_followers(cl, TARGET_USER, amount=100)
     
-    batch_size = 20  # Processa os seguidores em lotes de 20
-    for i in range(0, len(followers), batch_size):
-        batch = followers[i:i+batch_size]
-        for user_id in batch:
-            try:
-                # Executa a simulação de comportamento aleatório (aproximadamente 1 minuto)
-                simulate_random_behavior(cl, user_id, total_target=60)
-                cl.user_follow(user_id)
-                print(f"Seguiu: {user_id}")
-                # Aguarda entre 1 a 2 minutos (60 a 120 segundos) após seguir
-                post_follow_delay = random.uniform(60, 120)
-                print(f"Pausa pós-seguimento de {post_follow_delay:.2f} segundos\n")
-                time.sleep(post_follow_delay)
-            except Exception as e:
-                print(f"\nErro ao seguir {user_id}: {e}")
-                error_delay = random.uniform(120, 180)
-                print(f"Pausa de {error_delay:.2f} segundos devido ao erro\n")
-                time.sleep(error_delay)
-        batch_delay = random.uniform(1200, 2400)
-        print(f"\nAguardando {batch_delay/60:.2f} minutos antes do próximo lote\n")
-        time.sleep(batch_delay)
-    print("Fim do script")
+    # Para seguir 1 pessoa a cada 10 minutos:
+    for user_id in followers:
+        try:
+            # Define um tempo alvo de simulação aleatório entre 60 e 90 segundos
+            simulation_target = random.uniform(60, 90)
+            simulation_duration = simulate_random_behavior(cl, user_id, total_target=simulation_target)
+            cl.user_follow(user_id)
+            print(f"Seguiu: {user_id}")
+            # Calcula o tempo de espera para completar 10 minutos (600 seg)
+            post_follow_delay = 600 - simulation_duration
+            print(f"Aguardando {post_follow_delay:.2f} seg para seguir a próxima pessoa.\n")
+            time.sleep(post_follow_delay)
+        except Exception as e:
+            print(f"\nErro ao seguir {user_id}: {e}")
+            error_delay = random.uniform(120, 180)
+            print(f"Pausa de {error_delay:.2f} seg devido ao erro.\n")
+            time.sleep(error_delay)

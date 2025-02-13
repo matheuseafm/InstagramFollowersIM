@@ -1,20 +1,48 @@
 """
-Este script automatiza o processo de seguir usuários no Instagram usando a biblioteca instagrapi.
+login():
+  Realiza o login no Instagram usando as credenciais fornecidas. Se uma sessão anterior existir, tenta carregá-la.
+  Retorna uma instância do cliente autenticado.
 
-Constantes:
-- USERNAME: Nome de usuário da conta do Instagram.
-- PASSWORD: Senha da conta do Instagram.
-- TWO_FA_CODE: Código de autenticação de dois fatores.
-- TARGET_USER: Nome de usuário do alvo cujos seguidores serão seguidos.
+get_followers(cl, username, amount=100):
+  Obtém uma lista de seguidores de um usuário específico.
+  - cl: Instância do cliente autenticado.
+  - username: Nome de usuário do qual obter os seguidores.
+  - amount: Quantidade de seguidores a serem obtidos (padrão é 100).
+  Retorna uma lista de IDs dos seguidores.
 
-Funções:
-- login(): Realiza o login na conta do Instagram. Tenta carregar uma sessão salva de 'session.json' e, se falhar, realiza o login e salva a sessão.
-- get_followers(cl, username, amount=100): Obtém uma lista de IDs dos seguidores de um usuário específico.
+simulate_profile_visit(cl, user_id, delay_range=(10, 20)):
+  Simula a visita ao perfil de um usuário específico.
+  - cl: Instância do cliente autenticado.
+  - user_id: ID do usuário cujo perfil será visitado.
+  - delay_range: Intervalo de tempo (em segundos) para simular a visita (padrão é entre 10 e 20 segundos).
+  Retorna a duração da visita simulada.
 
-Execução principal:
-- Realiza o login na conta do Instagram.
-- Obtém os seguidores do usuário alvo.
-- Segue os seguidores em lotes de 20, com um intervalo de 50 segundos entre cada ação de seguir.
-- Após seguir cada lote, aguarda 15 minutos antes de seguir mais pessoas.
-- Exibe mensagens de status e erros durante o processo.
+simulate_feed_scrolling(delay_range=(10, 20)):
+  Simula a rolagem do feed do Instagram.
+  - delay_range: Intervalo de tempo (em segundos) para simular a rolagem (padrão é entre 10 e 20 segundos).
+  Retorna a duração da rolagem simulada.
+
+simulate_typing(delay_range=(5, 10)):
+  Simula a digitação no Instagram.
+  - delay_range: Intervalo de tempo (em segundos) para simular a digitação (padrão é entre 5 e 10 segundos).
+  Retorna a duração da digitação simulada.
+
+simulate_view_stories(delay_range=(10, 30)):
+  Simula a visualização de stories no Instagram.
+  - delay_range: Intervalo de tempo (em segundos) para simular a visualização (padrão é entre 10 e 30 segundos).
+  Retorna a duração da visualização simulada.
+
+simulate_like_post(cl, user_id):
+  Simula a ação de curtir uma publicação de um usuário específico.
+  - cl: Instância do cliente autenticado.
+  - user_id: ID do usuário cuja publicação será curtida.
+  Retorna a duração da ação de curtir simulada.
+
+simulate_random_behavior(cl, user_id, total_target):
+  Seleciona aleatoriamente de 1 a 3 ações dentre: visitar o perfil, rolar o feed, digitar, visualizar stories e curtir uma publicação.
+  Executa as ações e, se o tempo total for menor que 'total_target' segundos, aguarda o tempo restante.
+  - cl: Instância do cliente autenticado.
+  - user_id: ID do usuário para o qual as ações serão simuladas.
+  - total_target: Tempo total alvo (em segundos) para a simulação.
+  Retorna o tempo total gasto na simulação.
 """
